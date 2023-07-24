@@ -25,6 +25,7 @@
 		<UserSecretsId>a2091e37-94a0-4446-8a5d-1d5c0835333a</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>
+	<PropertyGroup Condition=" '$(RunConfiguration)' == 'Kestrel' " />
 	<ItemGroup>
 		<ProjectReference Include="..\..\Business\Grand.Business.Core\Grand.Business.Core.csproj" />
 		<ProjectReference Include="..\..\Core\Grand.Domain\Grand.Domain.csproj" />

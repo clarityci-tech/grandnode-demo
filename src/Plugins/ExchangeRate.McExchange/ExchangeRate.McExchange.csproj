@@ -1,6 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="..\..\Build\Grand.Common.props" />
 
+	<PropertyGroup>
+	  <Configurations>Release;Debug</Configurations>
+	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<OutputPath>..\..\Web\Grand.Web\Plugins\ExchangeRate.McExchange\</OutputPath>
 		<OutDir>$(OutputPath)</OutDir>

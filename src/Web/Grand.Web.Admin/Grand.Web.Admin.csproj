@@ -8,6 +8,7 @@
 		<!--Set GenerateRuntimeConfigurationFiles as true when Admin panel is supposed to works independent-->
 		<GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
 	</PropertyGroup>
+	<PropertyGroup Condition=" '$(RunConfiguration)' == 'Kestrel' " />
 	<ItemGroup>
 		<Content Include="Areas\**" CopyToPublishDirectory="Never" />
 		<Content Include="wwwroot\**" CopyToPublishDirectory="PreserveNewest" />

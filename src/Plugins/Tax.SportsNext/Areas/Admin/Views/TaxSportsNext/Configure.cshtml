@@ -1,0 +1,345 @@
+﻿@model SportsNextTaxListModel
+@using Tax.SportsNext.Models
+@using Grand.Domain.Common;
+@using Microsoft.AspNetCore.Routing
+@inject AdminAreaSettings adminAreaSettings
+@{
+    Layout = "_ConfigurePlugin";
+}
+<input id="active-menu-item" type="hidden" value="/Admin/Tax/Providers" />
+<div id="tax-providers-grid"></div>
+<div id="tax-categories-grid"></div>
+<script>
+    $(document).ready(function () {
+        $("#tax-categories-grid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("CategoryList", "TaxSportsNext"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: addAntiForgeryToken
+                    },
+                    update: {
+                        url:"@Html.Raw(Url.Action("CategorySkuUpdate", "TaxSportsNext"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: addAntiForgeryToken
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("CategorySkuDelete", "TaxSportsNext"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: addAntiForgeryToken
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            StoreName: { editable: false, type: "string" },
+                            TaxCategoryName: { editable: false, type: "string" },
+                            Sku: { editable: true, type: "string" },
+                            Id: { editable: false, type: "string" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: @(adminAreaSettings.DefaultGridPageSize),
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: [@(adminAreaSettings.GridPageSizes)]
+            },
+            editable: {
+                confirmation: false,
+                mode: "inline"
+            },
+            scrollable: false,
+            columns: [{
+                field: "StoreName",
+                title: "@Loc["Plugins.Tax.SportsNext.Fields.Store"]",
+                width: 300
+            }, {
+                field: "TaxCategoryName",
+                title: "@Loc["Plugins.Tax.SportsNext.Fields.TaxCategory.Id"]",
+                width: 200
+            }, {
+                field: "Sku",
+                title: "@Loc["Plugins.Tax.SportsNext.Fields.TaxCategory.SKU"]",
+                width: 200
+            }, {
+                command: [{
+                    name: "edit",
+                    text: "@Loc["Admin.Common.Edit"]"
+                }, {
+                    name: "destroy",
+                    text: "@Loc["Admin.Common.Delete"]"
+                }],
+                width: 200
+            }]
+        });
+        $("#tax-providers-grid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("ProviderList", "TaxSportsNext"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: addAntiForgeryToken
+                    },
+                    update: {
+                        url:"@Html.Raw(Url.Action("ProviderUpdate", "TaxSportsNext"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: addAntiForgeryToken
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("ProviderDelete", "TaxSportsNext"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: addAntiForgeryToken
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            StoreName: { editable: false, type: "string" },
+                            Url: { editable: true, type: "string" },
+                            Key: { editable: true, type: "string" },
+                            ClientId: { editable: true, type: "string" },
+                            Secret: { editable: true, type: "string" },
+                            Id: { editable: false, type: "string" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: @(adminAreaSettings.DefaultGridPageSize),
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: [@(adminAreaSettings.GridPageSizes)]
+            },
+            editable: {
+                confirmation: false,
+                mode: "inline"
+            },
+            scrollable: false,
+            columns: [{
+                field: "StoreName",
+                title: "@Loc["Plugins.Tax.SportsNext.Fields.Store"]",
+                width: 300
+            }, {
+                field: "Url",
+                title: "@Loc["Plugins.Tax.SportsNext.Fields.TaxProvider.Url"]",
+                width: 200
+            }, {
+                field: "ClientId",
+                title: "@Loc["Plugins.Tax.SportsNext.Fields.TaxProvider.ClientId"]",
+                width: 200
+            }, {
+                field: "Secret",
+                title: "@Loc["Plugins.Tax.SportsNext.Fields.TaxProvider.Secret"]",
+                width: 200
+            }, {
+                field: "Key",
+                title: "@Loc["Plugins.Tax.SportsNext.Fields.TaxProvider.Key"]",
+                width: 200
+            }, {
+                command: [{
+                    name: "edit",
+                    text: "@Loc["Admin.Common.Edit"]"
+                }, {
+                    name: "destroy",
+                    text: "@Loc["Admin.Common.Delete"]"
+                }],
+                width: 200
+            }]
+        });
+    });
+</script>
+<form asp-controller="SportsNextTax" asp-action="Configure" method="post">
+
+    <div class="form-horizontal">
+        <div class="form-body">
+            <div class="form-group">
+                <div class="note note-info">
+                    @Loc["Plugins.Tax.SportsNext.AddProvider.Hint"]
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3 text-right">
+                    <admin-label asp-for="AddTaxProviderStoreId" class="control-label" />
+                </div>
+                <div class="col-md-9 col-sm-9">
+                    <admin-select asp-for="AddTaxProviderStoreId" asp-items="Model.AvailableStores" />
+                    <span asp-validation-for="AddTaxProviderStoreId"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3 text-right">
+                    <admin-label asp-for="AddTaxProviderUrl" class="control-label" />
+                </div>
+                <div class="col-md-9 col-sm-9">
+                    <admin-input asp-for="AddTaxProviderUrl" />
+                    <span asp-validation-for="AddTaxProviderUrl"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3 text-right">
+                    <admin-label asp-for="AddTaxProviderClientId" class="control-label" />
+                </div>
+                <div class="col-md-9 col-sm-9">
+                    <admin-input asp-for="AddTaxProviderClientId" />
+                    <span asp-validation-for="AddTaxProviderClientId"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3 text-right">
+                    <admin-label asp-for="AddTaxProviderSecret" class="control-label" />
+                </div>
+                <div class="col-md-9 col-sm-9">
+                    <admin-input asp-for="AddTaxProviderSecret" />
+                    <span asp-validation-for="AddTaxProviderSecret"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3 text-right">
+                    <admin-label asp-for="AddTaxProviderKey" class="control-label" />
+                </div>
+                <div class="col-md-9 col-sm-9">
+                    <admin-input asp-for="AddTaxProviderKey" />
+                    <span asp-validation-for="AddTaxProviderKey"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <div class="row">
+                <div class="offset-md-3 offset-sm-3 col-md-9 col-sm-9">
+                    <input type="button" id="addprovider" class="btn green" value="@Loc["Plugins.Tax.SportsNext.AddProvider"]" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-horizontal">
+        <div class="form-body">
+            <div class="form-group">
+                <div class="note note-info">
+                    @Loc["Plugins.Tax.SportsNext.AddCategorySku.Hint"]
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3 text-right">
+                    <admin-label asp-for="AddTaxCategoryStoreId" class="control-label" />
+                </div>
+                <div class="col-md-9 col-sm-9">
+                    <admin-select asp-for="AddTaxCategoryStoreId" asp-items="Model.AvailableStores" />
+                    <span asp-validation-for="AddTaxCategoryStoreId"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3 text-right">
+                    <admin-label asp-for="AddTaxCategoryId" class="control-label" />
+                </div>
+                <div class="col-md-9 col-sm-9">
+                    <admin-select asp-for="AddTaxCategoryId" asp-items="Model.AvailableTaxCategories" />
+                    <span asp-validation-for="AddTaxCategoryId"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3 text-right">
+                    <admin-label asp-for="AddTaxCategorySku" class="control-label" />
+                </div>
+                <div class="col-md-9 col-sm-9">
+                    <admin-input asp-for="AddTaxCategorySku" />
+                    <span asp-validation-for="AddTaxCategorySku"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <div class="row">
+                <div class="offset-md-3 offset-sm-3 col-md-9 col-sm-9">
+                    <input type="button" id="addcategory" class="btn green" value="@Loc["Plugins.Tax.SportsNext.AddCategorySku"]" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(function () {
+            $('#addprovider').click(function () {
+
+                var postData = $(this.form).serialize();
+                addAntiForgeryToken(postData);
+
+                $.ajax({
+                    cache: false,
+                    type: 'POST',
+                    url: "@Html.Raw(Url.Action("AddProvider", "TaxSportsNext"))",
+                    data: postData,
+                    dataType: 'json',
+                    success: function (data) {
+                        var grid = $("#tax-providers-grid").data('kendoGrid');
+                        grid.dataSource.read();
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        alert('Failed to add provider.');
+                    }
+                });
+                return false;
+            });
+
+            $('#addcategory').click(function () {
+
+                var postData = $(this.form).serialize();
+                addAntiForgeryToken(postData);
+
+                $.ajax({
+                    cache: false,
+                    type: 'POST',
+                    url: "@Html.Raw(Url.Action("AddCategorySku", "TaxSportsNext"))",
+                    data: postData,
+                    dataType: 'json',
+                    success: function (data) {
+                        var grid = $("#tax-categories-grid").data('kendoGrid');
+                        grid.dataSource.read();
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        alert('Failed to add category.');
+                    }
+                });
+                return false;
+            });
+        });
+    </script>
+</form>

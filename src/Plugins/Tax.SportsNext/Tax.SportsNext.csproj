@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+	<Import Project="..\..\Build\Grand.Common.props" />
+	<PropertyGroup>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+	</PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>..\..\Web\Grand.Web\Plugins\Tax.SportsNext\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>..\..\Web\Grand.Web\Plugins\Tax.SportsNext\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+  </PropertyGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<RemoveDir Directories="..\..\Web\Grand.Web\Plugins\Tax.SportsNext\refs" />
+		<RemoveDir Directories="..\..\Web\Grand.Web\Plugins\Tax.SportsNext\ref" />
+	</Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Business\Grand.Business.Core\Grand.Business.Core.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Core\Grand.Domain\Grand.Domain.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Core\Grand.Infrastructure\Grand.Infrastructure.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Core\Grand.SharedKernel\Grand.SharedKernel.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Web\Grand.Web.Common\Grand.Web.Common.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Remove="Areas\" />
+    <None Remove="Areas\Admin\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="logo.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\" />
+    <Folder Include="Areas\Admin\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Payments.Service.Tax.Client">
+      <HintPath>..\..\Binaries\Tax\Payments.Service.Tax.Client.dll</HintPath>
+    </Reference>
+    <Reference Include="Payments.Service.Tax.Models">
+      <HintPath>..\..\Binaries\Tax\Payments.Service.Tax.Models.dll</HintPath>
+    </Reference>
+    <Reference Include="GolfNow.Payment.Client.Common">
+      <HintPath>..\..\Binaries\Tax\GolfNow.Payment.Client.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Payments.Client.Common">
+      <HintPath>..\..\Binaries\Tax\Payments.Client.Common.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
