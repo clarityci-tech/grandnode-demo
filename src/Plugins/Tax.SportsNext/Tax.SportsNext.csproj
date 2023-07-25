@@ -41,6 +41,7 @@
   <ItemGroup>
     <None Remove="Areas\" />
     <None Remove="Areas\Admin\" />
+    <None Remove="Handlers\" />
   </ItemGroup>
   <ItemGroup>
     <None Update="logo.jpg">
@@ -51,6 +52,7 @@
   <ItemGroup>
     <Folder Include="Areas\" />
     <Folder Include="Areas\Admin\" />
+    <Folder Include="Handlers\" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Payments.Service.Tax.Client">

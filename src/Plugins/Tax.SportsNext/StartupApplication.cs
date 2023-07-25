@@ -16,10 +16,8 @@ namespace Tax.SportsNext
         {
             services.AddScoped<ITaxProvider, SportsNextTaxProvider>();
             services.AddScoped<Services.ISportsNextTaxService, Services.SportsNextTaxService>();
-            services.AddScoped<INotificationHandler<OrderPlacedEvent>, SportsNextTaxProvider>();
-            services.AddScoped<INotificationHandler<PaymentTransactionRefundedEvent>, SportsNextTaxProvider>();
-
-            services.AddMediatR(options => options.RegisterServicesFromAssembly(Assembly.GetAssembly(typeof(SportsNextTaxProvider))));
+            //services.AddScoped<INotificationHandler<OrderPaidEvent>, Handlers.OrderPaidEventHandler>();
+            //services.AddScoped<INotificationHandler<PaymentTransactionRefundedEvent>, Handlers.PaymentTransactionRefundHandler>();
         }
 
         public int Priority => 10;

@@ -164,9 +164,10 @@ namespace Tax.SportsNext.Services
             await _mediator.EntityInserted(map);
         }
 
-        public Task<SportsNextOrderTaxInvoiceMap> GetOrderTaxInvoiceMappingById(string orderId)
+        public Task<SportsNextOrderTaxInvoiceMap> GetOrderTaxInvoiceMappingByOrderId(string orderId)
         {
-            return _orderTaxInvoiceMapRepository.GetByIdAsync(orderId);
+            var result = _orderTaxInvoiceMapRepository.Table.FirstOrDefault(o => o.OrderId == orderId);
+            return Task.FromResult(result);
         }
 
         public async Task UpdateOrderTaxInvoiceMapping(SportsNextOrderTaxInvoiceMap map)

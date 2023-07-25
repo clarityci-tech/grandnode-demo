@@ -15,18 +15,13 @@ using static MassTransit.ValidationResultExtensions;
 namespace Tax.SportsNext
 {
 	public class SportsNextTaxProvider :
-        ITaxProvider,
-        INotificationHandler<OrderPlacedEvent>,
-        INotificationHandler<PaymentTransactionRefundedEvent>
+        ITaxProvider
     {
         private readonly ISportsNextTaxService _sportsNextTaxService;
         private readonly ICountryService _countryService;
         private readonly ICurrencyService _currencyService;
         private readonly ITranslationService _translationService;
-        private readonly IProductService _productService;
-        private readonly ICacheBase _cacheBase;
         private readonly IWorkContext _workContext;
-        private readonly IOrderService _orderService;
 
         private readonly SportsNextTaxSettings _taxSettings;
 
@@ -41,14 +36,11 @@ namespace Tax.SportsNext
         SportsNextTaxSettings taxSettings)
         {
             _translationService = translationService;
-            _cacheBase = cacheBase;
             _workContext = workContext;
             _sportsNextTaxService = sportsNextService;
             _taxSettings = taxSettings;
             _countryService = countryService;
             _currencyService = currencyService;
-            _productService = productService;
-            _orderService = orderService;
         }
 
         public string ConfigurationUrl => SportsNextTaxDefaults.ConfigurationUrl;
@@ -89,7 +81,7 @@ namespace Tax.SportsNext
         {
             var result = new TaxResult { };
 
-            if(calculateTaxRequest == null)
+            if (calculateTaxRequest == null)
             {
                 result.Errors.Add("Invalid tax request");
                 return result;
@@ -103,7 +95,7 @@ namespace Tax.SportsNext
 
             var country = await _countryService.GetCountryById(calculateTaxRequest.Address.CountryId);
 
-            if(country == null)
+            if (country == null)
             {
                 result.Errors.Add($"Country invalid (country id:{calculateTaxRequest.Address.CountryId})");
                 return result;
@@ -111,7 +103,7 @@ namespace Tax.SportsNext
 
             var region = (await _countryService.GetStateProvincesByCountryId(country.Id)).FirstOrDefault(f => f.Id == calculateTaxRequest.Address.StateProvinceId);
 
-            if(region == null)
+            if (region == null)
             {
                 result.Errors.Add($"Region invalid (state / province id:{calculateTaxRequest.Address.StateProvinceId})");
                 return result;
@@ -119,7 +111,7 @@ namespace Tax.SportsNext
 
             var currency = await _currencyService.GetCurrencyById(_workContext.CurrentStore.DefaultCurrencyId);
 
-            if(currency == null)
+            if (currency == null)
             {
                 result.Errors.Add($"Default currency for store invalid (default currency id:{_workContext.CurrentStore.DefaultCurrencyId})");
                 return result;
@@ -127,7 +119,7 @@ namespace Tax.SportsNext
 
             var category = await this.FindTaxCategorySku(calculateTaxRequest.TaxCategoryId, _workContext.CurrentStore.Id);
 
-            if(category == null)
+            if (category == null)
             {
                 result.Errors.Add($"Tax category not found (tax category id:{calculateTaxRequest.TaxCategoryId}, store id:{_workContext.CurrentStore.Id})");
                 return result;
@@ -135,7 +127,7 @@ namespace Tax.SportsNext
 
             var selected = await this.FindTaxProvider(_workContext.CurrentStore.Id);
 
-            if(selected == null)
+            if (selected == null)
             {
                 result.Errors.Add($"Tax provider not found (store id:{_workContext.CurrentStore.Id})");
                 return result;
@@ -189,147 +181,13 @@ namespace Tax.SportsNext
 
                 result.TaxRate = (double)(queryResult.Invoice.LineItems.First().Rate * 100);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 result.Errors.Add(ex.Message);
                 return result;
             }
 
             return result;
-        }
-
-        public async Task Handle(OrderPlacedEvent notification, CancellationToken cancellationToken)
-        {
-            var order = notification.Order;
-            var address = order.ShippingAddress;
-
-            if (address == null)
-            {
-                return;
-            }
-
-            var country = await _countryService.GetCountryById(address.CountryId);
-            var region = (await _countryService.GetStateProvincesByCountryId(country.Id)).FirstOrDefault(f => f.Id == address.StateProvinceId);
-            var selected = await this.FindTaxProvider(order.StoreId);
-
-            var destinationAddress = new Payments.Service.Tax.Models.Address {
-                AddressType = Payments.Service.Tax.Models.Enumerations.AddressType.PhysicalDestination,
-                City = address.City,
-                Line1 = address.Address1,
-                Line2 = address.Address2,
-                PostalCode = address.ZipPostalCode,
-                Country = country.ThreeLetterIsoCode,
-                Region = region.Name
-            };
-
-            var sourceAddress = new Payments.Service.Tax.Models.Address {
-                AddressType = Payments.Service.Tax.Models.Enumerations.AddressType.PhysicalOrigin,
-                City = address.City,
-                Line1 = address.Address1,
-                Line2 = address.Address2,
-                PostalCode = address.ZipPostalCode,
-                Country = country.ThreeLetterIsoCode,
-                Region = region.Name
-            };
-
-            var items = new List<Payments.Service.Tax.Models.LineItem>();
-
-            foreach (var item in order.OrderItems)
-            {
-                var product = await _productService.GetProductById(item.ProductId);
-                var category = await this.FindTaxCategorySku(product.TaxCategoryId, order.StoreId);
-
-                var lineItem = new Payments.Service.Tax.Models.LineItem {
-                    Amount = (decimal)item.UnitPriceExclTax,
-                    Addresses = new List<Payments.Service.Tax.Models.Address> {
-                    destinationAddress
-                },
-                    IsTaxIncluded = false,
-                    Quantity = item.Quantity,
-                    TaxCode = category.SKU,
-                };
-
-                items.Add(lineItem);
-            }
-
-            try
-            {
-                var taxClient = new Payments.Service.Tax.Client.TaxClient(selected.Url, selected.ClientId, selected.Secret);
-
-                var taxRequest = new Payments.Service.Tax.Models.Contracts.CommitInvoiceRequest {
-                    LineItems = items,
-                    CurrencyCode = order.PrimaryCurrencyCode ?? order.CustomerCurrencyCode,
-                    EffectiveDate = DateTime.UtcNow,
-                    TaxEntityKey = selected.Key,
-                    Addresses = new List<Payments.Service.Tax.Models.Address> { sourceAddress },
-                    ReferenceKey = order.OrderGuid.ToString()
-                };
-
-                var queryResult = await taxClient.CommitInvoiceAsync(taxRequest);
-
-                await _sportsNextTaxService.InsertOrderTaxInvoiceMapping(new Domain.SportsNextOrderTaxInvoiceMap {
-                    OrderGuid = order.OrderGuid,
-                    TaxInvoiceKey = queryResult.Invoice.InvoiceKey
-                });
-            }
-            catch (Exception ex)
-            {
-                return;
-            }
-        }
-
-        public async Task Handle(PaymentTransactionRefundedEvent notification, CancellationToken cancellationToken)
-        {
-            var order = await _orderService.GetOrderByGuid(notification.PaymentTransaction.OrderGuid);
-            var selected = await this.FindTaxProvider(order.StoreId);
-            var mapping = await _sportsNextTaxService.GetOrderTaxInvoiceMappingById(order.Id);
-
-            var taxClient = new Payments.Service.Tax.Client.TaxClient(selected.Url, selected.ClientId, selected.Secret);
-
-            var taxInvoice = await taxClient.GetInvoiceAsync(mapping.TaxInvoiceKey);
-
-            var totalLeft = (decimal)notification.PaymentTransaction.RefundedAmount;
-            var items = taxInvoice.LineItems.OrderByDescending(li => li.Remaining.Total).ToList();
-            var instructions = new List<Payments.Service.Tax.Models.RefundLineInstruction>();
-
-            foreach (var item in items)
-            {
-                var itemRemaining = (decimal)item.Remaining.Total;
-
-                if(itemRemaining <= decimal.Zero)
-                {
-                    continue;
-                }
-
-                var applicable = totalLeft > itemRemaining ? itemRemaining : totalLeft;
-                var percentage = applicable / itemRemaining;
-
-                var grossRefund = Math.Round(item.Remaining.Gross * percentage, 2);
-
-                if (grossRefund > decimal.Zero)
-                {
-                    instructions.Add(new Payments.Service.Tax.Models.RefundLineInstruction { Amount = grossRefund, LineNumber = item.LineNumber });
-                    totalLeft -= applicable;
-                }
-            }
-
-            var refundRequest = new Payments.Service.Tax.Models.Contracts.RefundInvoiceRequest
-            {
-                Instructions = new Payments.Service.Tax.Models.RefundInstructions {
-                    EffectiveDate = DateTime.UtcNow,
-                    LineInstructions = instructions,
-                    Reason = "Customer Refund",
-                    RefundType = Payments.Service.Tax.Models.Enumerations.TaxRefundType.Partial
-                }
-            };
-
-            var refundResult = await taxClient.RefundInvoiceAsync(mapping.TaxInvoiceKey, refundRequest);
-
-            if (refundResult.InvoiceKey.HasValue)
-            {
-                mapping.RefundInvoiceKeys.Add(refundResult.InvoiceKey.ToString());
-                await _sportsNextTaxService.UpdateOrderTaxInvoiceMapping(mapping);
-            }
         }
     }
 }

@@ -26,7 +26,7 @@ namespace Tax.SportsNext.Services
 
         Task InsertOrderTaxInvoiceMapping(Domain.SportsNextOrderTaxInvoiceMap map);
 
-        Task<Domain.SportsNextOrderTaxInvoiceMap> GetOrderTaxInvoiceMappingById(string orderId);
+        Task<Domain.SportsNextOrderTaxInvoiceMap> GetOrderTaxInvoiceMappingByOrderId(string orderId);
 
         Task UpdateOrderTaxInvoiceMapping(Domain.SportsNextOrderTaxInvoiceMap map);
     }
