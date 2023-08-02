@@ -71,7 +71,7 @@ namespace Tax.SportsNext.Handlers
 
                 if (grossRefund > decimal.Zero)
                 {
-                    instructions.Add(new Payments.Service.Tax.Models.RefundLineInstruction { Amount = grossRefund, LineNumber = item.LineNumber });
+                    instructions.Add(new Payments.Service.Tax.Models.RefundLineInstruction { Amount = -grossRefund, LineNumber = item.LineNumber });
                     totalLeft -= applicable;
                 }
             }
