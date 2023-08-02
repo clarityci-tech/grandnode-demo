@@ -99,7 +99,7 @@ namespace Tax.SportsNext.Handlers
                     CurrencyCode = order.PrimaryCurrencyCode ?? order.CustomerCurrencyCode,
                     EffectiveDate = DateTime.UtcNow,
                     TaxEntityKey = selected.Key,
-                    Addresses = new List<Payments.Service.Tax.Models.Address> { sourceAddress },
+                    Addresses = new List<Payments.Service.Tax.Models.Address> { sourceAddress, destinationAddress },
                     ReferenceKey = order.OrderGuid.ToString()
                 };
 
