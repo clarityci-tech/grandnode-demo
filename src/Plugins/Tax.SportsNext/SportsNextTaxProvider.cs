@@ -172,7 +172,7 @@ namespace Tax.SportsNext
                     CurrencyCode = currency.CurrencyCode,
                     EffectiveDate = DateTime.UtcNow,
                     TaxEntityKey = selected.Key,
-                    Addresses = new List<Payments.Service.Tax.Models.Address> { sourceAddress }
+                    Addresses = new List<Payments.Service.Tax.Models.Address> { destinationAddress, sourceAddress }
                 };
 
                 //result.Errors.Add(Newtonsoft.Json.JsonConvert.SerializeObject(taxRequest));
