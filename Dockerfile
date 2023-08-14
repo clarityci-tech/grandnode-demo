@@ -25,6 +25,7 @@ RUN dotnet build /app/Plugins/Widgets.FacebookPixel -c Release -p:SourceRevision
 RUN dotnet build /app/Plugins/Widgets.GoogleAnalytics -c Release -p:SourceRevisionId=$GIT_COMMIT -p:GitBranch=$GIT_BRANCH
 RUN dotnet build /app/Plugins/Widgets.Slider -c Release -p:SourceRevisionId=$GIT_COMMIT -p:GitBranch=$GIT_BRANCH
 RUN dotnet build /app/Plugins/Tax.SportsNext -c Release -p:SourceRevisionId=$GIT_COMMIT -p:GitBranch=$GIT_BRANCH
+RUN dotnet build /app/Plugins/Payments.SportsNext.Direct -c Release -p:SourceRevisionId=$GIT_COMMIT -p:GitBranch=$GIT_BRANCH
 
 # restore
 RUN dotnet restore /app/Web/Grand.Web/Grand.Web.csproj
