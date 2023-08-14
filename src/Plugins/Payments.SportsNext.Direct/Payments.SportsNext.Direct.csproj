@@ -1,0 +1,101 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <Import Project="..\..\Build\Grand.Common.props" />
+	<PropertyGroup>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+	</PropertyGroup>
+
+	
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>..\..\Web\Grand.Web\Plugins\Payments.SportsNext.Direct\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>..\..\Web\Grand.Web\Plugins\Payments.SportsNext.Direct\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+  </PropertyGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<RemoveDir Directories="..\..\Web\Grand.Web\Plugins\Payments.SportsNext.Direct\refs" />
+		<RemoveDir Directories="..\..\Web\Grand.Web\Plugins\Payments.SportsNext.Direct\ref" />
+	</Target>
+
+    <Target Name="CopyFile" AfterTargets="AfterBuild">
+		<Copy SourceFiles="@(CopyFiles)" DestinationFolder="..\..\Web\Grand.Web\Plugins\Payments.SportsNext.Direct\" />
+	</Target>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Business\Grand.Business.Core\Grand.Business.Core.csproj" />
+		<ProjectReference Include="..\..\Core\Grand.Domain\Grand.Domain.csproj" />
+		<ProjectReference Include="..\..\Core\Grand.Infrastructure\Grand.Infrastructure.csproj" />
+		<ProjectReference Include="..\..\Core\Grand.SharedKernel\Grand.SharedKernel.csproj" />
+		<ProjectReference Include="..\..\Web\Grand.Web.Common\Grand.Web.Common.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="Validators\" />
+	  <None Remove="Models\" />
+	  <None Remove="Areas\" />
+	  <None Remove="Views\" />
+	  <None Remove="Domain\" />
+	  <None Remove="Services\" />
+	  <None Remove="Areas\Admin\" />
+	  <None Remove="Areas\Admin\Controllers\" />
+	  <None Remove="Areas\Admin\Views\" />
+	  <None Remove="Views\Shared\" />
+	  <None Remove="Views\Shared\Components\" />
+	  <None Remove="Controllers\" />
+	  <None Remove="Areas\Admin\Views\PaymentsSportsNextDirect\" />
+	  <None Remove="Views\PaymentsSportsNextDirect\" />
+	  <None Remove="Views\Shared\Components\PaymentsSportsNextDirectScripts\" />
+	  <None Remove="Components\" />
+	</ItemGroup>
+  	<ItemGroup>
+		<None Update="logo.jpg">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="logo.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+  	<ItemGroup>
+  	  <Folder Include="Validators\" />
+  	  <Folder Include="Models\" />
+  	  <Folder Include="Areas\" />
+  	  <Folder Include="Views\" />
+  	  <Folder Include="Domain\" />
+  	  <Folder Include="Services\" />
+  	  <Folder Include="Areas\Admin\" />
+  	  <Folder Include="Areas\Admin\Controllers\" />
+  	  <Folder Include="Areas\Admin\Views\" />
+  	  <Folder Include="Views\Shared\" />
+  	  <Folder Include="Views\Shared\Components\" />
+  	  <Folder Include="Controllers\" />
+  	  <Folder Include="Areas\Admin\Views\PaymentsSportsNextDirect\" />
+  	  <Folder Include="Views\PaymentsSportsNextDirect\" />
+  	  <Folder Include="Views\Shared\Components\PaymentsSportsNextDirectScripts\" />
+  	  <Folder Include="Components\" />
+  	</ItemGroup>
+  	<ItemGroup>
+  	  <Reference Include="GolfNow.Payment.Processing.API.Client">
+  	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Client.dll</HintPath>
+  	  </Reference>
+  	  <Reference Include="GolfNow.Payment.Processing.API.Common.Model">
+  	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Common.Model.dll</HintPath>
+  	  </Reference>
+  	  <Reference Include="GolfNow.Payment.Processing.API.Manage.Model">
+  	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Manage.Model.dll</HintPath>
+  	  </Reference>
+  	  <Reference Include="GolfNow.Payment.Processing.API.Model">
+  	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Model.dll</HintPath>
+  	  </Reference>
+  	  <Reference Include="GolfNow.Payment.Client.Common">
+  	    <HintPath>..\..\Binaries\Tax\GolfNow.Payment.Client.Common.dll</HintPath>
+  	  </Reference>
+  	  <Reference Include="Payments.Client.Common">
+  	    <HintPath>..\..\Binaries\Tax\Payments.Client.Common.dll</HintPath>
+  	  </Reference>
+  	</ItemGroup>
+</Project>
