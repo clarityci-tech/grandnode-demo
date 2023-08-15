@@ -31,6 +31,7 @@
 		<ProjectReference Include="..\..\Core\Grand.Infrastructure\Grand.Infrastructure.csproj" />
 		<ProjectReference Include="..\..\Core\Grand.SharedKernel\Grand.SharedKernel.csproj" />
 		<ProjectReference Include="..\..\Web\Grand.Web.Common\Grand.Web.Common.csproj" />
+		<ProjectReference Include="..\SportsNext.Shared\SportsNext.Shared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -79,23 +80,11 @@
   	  <Folder Include="Components\" />
   	</ItemGroup>
   	<ItemGroup>
-  	  <Reference Include="GolfNow.Payment.Processing.API.Client">
-  	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Client.dll</HintPath>
-  	  </Reference>
-  	  <Reference Include="GolfNow.Payment.Processing.API.Common.Model">
-  	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Common.Model.dll</HintPath>
-  	  </Reference>
-  	  <Reference Include="GolfNow.Payment.Processing.API.Manage.Model">
-  	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Manage.Model.dll</HintPath>
-  	  </Reference>
   	  <Reference Include="GolfNow.Payment.Processing.API.Model">
   	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Model.dll</HintPath>
   	  </Reference>
-  	  <Reference Include="GolfNow.Payment.Client.Common">
-  	    <HintPath>..\..\Binaries\Tax\GolfNow.Payment.Client.Common.dll</HintPath>
-  	  </Reference>
-  	  <Reference Include="Payments.Client.Common">
-  	    <HintPath>..\..\Binaries\Tax\Payments.Client.Common.dll</HintPath>
+  	  <Reference Include="GolfNow.Payment.Processing.API.Common.Model">
+  	    <HintPath>..\..\Binaries\Payments\GolfNow.Payment.Processing.API.Common.Model.dll</HintPath>
   	  </Reference>
   	</ItemGroup>
 </Project>

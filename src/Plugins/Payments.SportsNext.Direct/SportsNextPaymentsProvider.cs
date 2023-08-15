@@ -1,5 +1,6 @@
 ﻿using GolfNow.Payment.Processing.API.Model;
 using Grand.Business.Core.Enums.Checkout;
+using Grand.Business.Core.Interfaces.Checkout.Orders;
 using Grand.Business.Core.Interfaces.Checkout.Payments;
 using Grand.Business.Core.Interfaces.Common.Directory;
 using Grand.Business.Core.Interfaces.Common.Localization;
@@ -7,11 +8,15 @@ using Grand.Business.Core.Interfaces.Customers;
 using Grand.Business.Core.Utilities.Checkout;
 using Grand.Domain.Orders;
 using Grand.Domain.Payments;
+using MediatR;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Payments.SportsNext.Direct.Models;
 using Payments.SportsNext.Direct.Services;
 using Payments.SportsNext.Direct.Validators;
+using SportsNext.Shared;
+using SportsNext.Shared.Models;
 using System;
 using static MassTransit.ValidationResultExtensions;
 
@@ -26,6 +31,7 @@ namespace Payments.SportsNext.Direct
         private readonly ICountryService _countryService;
         private readonly SportsNextPaymentsDirectSettings _sportsNextPaymentsDirectSettings;
         private readonly Services.ISportsNextPaymentService _sportsNextPaymentService;
+        private readonly IOrderService _orderService;
 
         public SportsNextPaymentsProvider(
             ITranslationService translationService,
@@ -34,7 +40,8 @@ namespace Payments.SportsNext.Direct
             IHttpContextAccessor httpContextAccessor,
             ICountryService countryService,
             SportsNextPaymentsDirectSettings sportsNextPaymentsDirectSettings,
-            Services.ISportsNextPaymentService sportsNextPaymentService)
+            Services.ISportsNextPaymentService sportsNextPaymentService,
+            IOrderService orderService)
         {
             _translationService = translationService;
             _customerService = customerService;
@@ -43,6 +50,7 @@ namespace Payments.SportsNext.Direct
             _countryService = countryService;
             _sportsNextPaymentsDirectSettings = sportsNextPaymentsDirectSettings;
             _sportsNextPaymentService = sportsNextPaymentService;
+            _orderService = orderService;
         }
 
         private async Task<Domain.SportsNextPaymentProvider> FindPaymentProvider(string storeId)
@@ -75,7 +83,48 @@ namespace Payments.SportsNext.Direct
         public async Task<RefundPaymentResult> Refund(RefundPaymentRequest refundPaymentRequest)
         {
             var result = new RefundPaymentResult();
-            result.AddError("Refund method not supported");
+
+            // get customer
+            var customer = await _customerService.GetCustomerById(refundPaymentRequest.PaymentTransaction.CustomerId);
+
+            //get settings
+            var provider = await this.FindPaymentProvider(refundPaymentRequest.PaymentTransaction.StoreId);
+            var merchantKey = provider.Key;
+            var clientId = provider.ClientId;
+            var secret = provider.Secret;
+            var url = provider.Url;
+
+            //new gateway
+            var client = new PaymentProcessingClient(url, clientId, secret);
+
+            try
+            {
+                var response = await client.PartialTransactionItemCredit(new SingleItemReversal {
+                    ExternalOrderID = refundPaymentRequest.PaymentTransaction.Id,
+                    ConfirmationID = refundPaymentRequest.PaymentTransaction.CaptureTransactionId,
+                    Amount = Convert.ToDecimal(refundPaymentRequest.AmountToRefund),
+                    MerchantKey = merchantKey,
+                    ExternalAccountID = customer.CustomerGuid.ToString(),
+                });
+
+                var existing = (await client.GetTransactions(
+                    refundPaymentRequest.PaymentTransaction.CaptureTransactionId,
+                    refundPaymentRequest.PaymentTransaction.Id,
+                    merchantKey)).FirstOrDefault(t => string.Compare(t.Type,"payment",true) == 0);
+
+                result.NewTransactionStatus = existing == null || existing.Amount.Net <= decimal.Zero ?
+                    TransactionStatus.Refunded :
+                    TransactionStatus.PartiallyRefunded;
+            }
+            catch (ClientException<ErrorResponse> ex)
+            {
+                result.AddError(ex.Response.ErrorDetail);
+            }
+            catch (Exception ex)
+            {
+                result.AddError("Unable to refund transaction." + ex.ToString());
+            }
+
             return await Task.FromResult(result);
         }
 
@@ -143,7 +192,7 @@ namespace Payments.SportsNext.Direct
         /// </summary>
         public async Task<bool> SupportVoid()
         {
-            return await Task.FromResult(true);
+            return await Task.FromResult(false);
         }
 
         /// <summary>
@@ -193,7 +242,7 @@ namespace Payments.SportsNext.Direct
         {
             var processPaymentResult = new ProcessPaymentResult();
 
-            //get customer
+            // get customer
             var customer = await _customerService.GetCustomerById(paymentTransaction.CustomerId);
 
             // var region stuff
@@ -208,14 +257,15 @@ namespace Payments.SportsNext.Direct
             var url = provider.Url;
 
             //new gateway
-            var client = new GolfNow.Payment.Processing.API.Client.PaymentProcessingClient(url, clientId, secret);
+            var client = new PaymentProcessingClient(url, clientId, secret);
 
             try
             {
-                var response = client.ProcessItem(new GolfNow.Payment.Processing.API.Model.SingleItem {
+                var response = await client.ProcessItem(new GolfNow.Payment.Processing.API.Model.SingleItem {
                     Amount = Convert.ToDecimal(paymentTransaction.TransactionAmount),
                     MerchantKey = merchantKey,
                     ExternalOrderID = paymentTransaction.Id,
+                    Currency = paymentTransaction.CurrencyCode,
                     Payment = new CreditCardPaymentMethod {
                         CardNumber = _httpContextAccessor.HttpContext!.Session.GetString("CardNumber")!,
                         ExpirationMonth = _httpContextAccessor.HttpContext.Session.GetString("ExpireMonth")!,
@@ -233,24 +283,31 @@ namespace Payments.SportsNext.Direct
                     CVV = _httpContextAccessor.HttpContext.Session.GetString("CardCode")!
                 });
 
-
                 var result = response?.Results?.FirstOrDefault();
 
                 if (result != null && result.IsSuccessful)
                 {
                     processPaymentResult.PaidAmount = paymentTransaction.TransactionAmount;
                     paymentTransaction.AuthorizationTransactionId = result.TransactionID;
-                    paymentTransaction.CaptureTransactionId = result.TransactionID;
+                    paymentTransaction.CaptureTransactionId = response.ConfirmationID;
                     processPaymentResult.NewPaymentTransactionStatus = Grand.Domain.Payments.TransactionStatus.Paid;
                 }
-                else
+                else if(result != null)
                 {
                     processPaymentResult.AddError("Error processing payment." + result.TransactionStatus);
                 }
+                else
+                {
+                    processPaymentResult.AddError("Error processing payment.");
+                }
+            }
+            catch(ClientException<ErrorResponse> ex)
+            {
+                processPaymentResult.AddError(ex.Response.ErrorDetail);
             }
             catch(Exception ex)
             {
-                processPaymentResult.AddError("Error processing payment." + ex.ToString());
+                processPaymentResult.AddError("Error processing payment." + ex.Message);
             }
 
             return processPaymentResult;

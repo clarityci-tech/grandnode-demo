@@ -56,6 +56,7 @@
 		<Content Include="Roslyn\**" CopyToPublishDirectory="PreserveNewest" Exclude="Roslyn\**\*.dll" />
 		<Content Include="logs\**" CopyToPublishDirectory="PreserveNewest" />
 		<Content Remove="wwwroot\assets\images\thumbs\*.jpeg;wwwroot\assets\images\thumbs\*.jpg;wwwroot\assets\images\thumbs\*.png" />
+		<Content Remove="logs\log.txt" />
 	</ItemGroup>
 	<Target Name="PublishViews" BeforeTargets="PrepareForPublish">
 		<ItemGroup>
